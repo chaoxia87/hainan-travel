@@ -33,7 +33,7 @@ var MediaMarker = {
     { id: "camera", icon: "📷", label: "景点/拍照", color: "#FF69B4", bg: "linear-gradient(135deg,#FF69B4,#FF1493)", shadow: "rgba(255,105,180,0.55)" },
     { id: "food", icon: "🍜", label: "餐饮", color: "#FF8C00", bg: "linear-gradient(135deg,#FF8C00,#FF6347)", shadow: "rgba(255,140,0,0.55)" },
     { id: "hotel", icon: "🏨", label: "住宿", color: "#4FC3F7", bg: "linear-gradient(135deg,#4FC3F7,#0288D1)", shadow: "rgba(79,195,247,0.55)" },
-    { id: "play", icon: "🏖️", label: "游玩", color: "#66DD88", bg: "linear-gradient(135deg,#66DD88,#2E7D32)", shadow: "rgba(102,221,136,0.55)" }
+    { id: "play", icon: "🏊", label: "游玩", color: "#66DD88", bg: "linear-gradient(135deg,#66DD88,#2E7D32)", shadow: "rgba(102,221,136,0.55)" }
   ],
   _getIconConfig: function(iconType) {
     var found = this.iconTypes.find(function(t) { return t.id === iconType; });
