@@ -211,7 +211,7 @@ var MediaMarker = {
     var cfg = this._getIconConfig(item.iconType || "camera");
     var el = document.createElement("div");
     el.style.cssText = "width:34px;height:34px;background:" + cfg.bg + ";border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;box-shadow:0 2px 14px " + cfg.shadow + ";transition:all 0.25s;";
-    el.innerHTML = item.imgData ? "🖼️" : (item.vidData ? "🎬" : cfg.icon);
+    el.innerHTML = cfg.icon;
     el.title = item.title + " [" + cfg.label + "]";
     el.dataset.iconType = item.iconType || "camera";
 
