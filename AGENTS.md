@@ -30,7 +30,7 @@ D:\codex\lvyouxiangmu\
 │   ├── planner.js      # AI路线规划+历史管理
 │   ├── routeAnimation.js # 路线动画（小汽车+镜头跟随）
 │   ├── knowledge.js    # 知识库（问答+路线记录）
-│   └── media.js        # 标注功能（图片/视频上传+IndexedDB持久化）
+│   └── media.js        # 标注功能（图片/视频上传+4种标签图标+IndexedDB持久化+导出/导入）
 ├── data/               # JSON数据（备用）
 ├── assets/images/      # 图片资源（touxiang1.png为logo）
 └── server_data/        # 服务器端数据存储（自动创建）
@@ -71,7 +71,7 @@ D:\codex\lvyouxiangmu\
 4. 路线动画演示（卡通敞篷车沿路线移动+镜头跟随）
 5. 圈画功能（多点标注+逐点消除+颜色选择）
 6. 画笔功能（自由绘制+撤销+清空+颜色选择）
-7. 媒体标注（图片/视频上传+IndexedDB持久化+导出/导入备份）
+7. 媒体标注（图片/视频上传+4种图标标签📷景点/🍜餐饮/🏨住宿/🏊游玩+编辑切换+导出/导入含标签属性）
 8. 知识库（问答记录+路线历史+全部记录查看）
 9. 城市快捷导航（三亚/万宁/海口/全景等）
 10. 避坑模式（景点避坑提示）
@@ -79,7 +79,10 @@ D:\codex\lvyouxiangmu\
 ## 备份版本
 - D:\codex\lvyouxiangmu_backup_V2.0 （早期稳定版）
 - D:\codex\lvyouxiangmu_backup_V2.2 （中期版本）
+- D:\codex\lvyouxiangmu_backup_V2.0 （早期稳定版）
+- D:\codex\lvyouxiangmu_backup_V2.2 （中期版本）
 - D:\codex\lvyouxiangmu_backup_V2.5 （云端部署版）
+- D:\codex\lvyouxiangmu_backup_V2.7 （多图标标签版 ★当前）
 
 ## 注意事项
 - 批量编辑js文件使用Node.js脚本（PowerShell中文路径转义问题）
