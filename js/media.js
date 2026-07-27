@@ -29,6 +29,16 @@ var MediaDB = {
 
 var MediaMarker = {
   map: null, mediaItems: [], mediaMarkers: [], active: false, popup: null,
+  iconTypes: [
+    { id: "camera", icon: "📷", label: "景点/拍照", color: "#FF69B4", bg: "linear-gradient(135deg,#FF69B4,#FF1493)", shadow: "rgba(255,105,180,0.55)" },
+    { id: "food", icon: "🍜", label: "餐饮", color: "#FF8C00", bg: "linear-gradient(135deg,#FF8C00,#FF6347)", shadow: "rgba(255,140,0,0.55)" },
+    { id: "hotel", icon: "🏨", label: "住宿", color: "#4FC3F7", bg: "linear-gradient(135deg,#4FC3F7,#0288D1)", shadow: "rgba(79,195,247,0.55)" },
+    { id: "play", icon: "🎮", label: "游玩", color: "#66DD88", bg: "linear-gradient(135deg,#66DD88,#2E7D32)", shadow: "rgba(102,221,136,0.55)" }
+  ],
+  _getIconConfig: function(iconType) {
+    var found = this.iconTypes.find(function(t) { return t.id === iconType; });
+    return found || this.iconTypes[0];
+  },
   STORAGE_KEY: "hainan_annotations_meta",
 
   async init(map) {
@@ -75,7 +85,7 @@ var MediaMarker = {
     // 保存轻量元数据到 localStorage
     var self = this;
     var meta = this.mediaItems.map(function(item) {
-      return { id: item.id, lng: item.lng, lat: item.lat, title: item.title, desc: item.desc, hasImg: !!item.imgData, hasVid: !!item.vidData };
+      return { id: item.id, lng: item.lng, lat: item.lat, title: item.title, desc: item.desc, iconType: item.iconType || "camera", hasImg: !!item.imgData, hasVid: !!item.vidData };
     });
     try { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(meta)); } catch(e) {}
   },
@@ -96,9 +106,16 @@ var MediaMarker = {
     var old = document.getElementById("mediaUploadDialog"); if (old) old.remove();
     var d = document.createElement("div"); d.id = "mediaUploadDialog";
     var isEdit = !!editItem;
+    var currentIconType = (isEdit && editItem.iconType) ? editItem.iconType : "camera";
     d.innerHTML = '<div class="media-dialog-overlay" onclick="document.getElementById(\'mediaUploadDialog\').remove()"></div>' +
       '<div class="media-dialog"><div class="media-dialog-header"><h4>' + (isEdit ? '✏️ 编辑' : '📷 添加') + '媒体标注</h4><button class="btn-close" onclick="document.getElementById(\'mediaUploadDialog\').remove()">&times;</button></div>' +
       '<div class="media-dialog-body"><input type="hidden" id="mediaEditId" value="' + (isEdit ? editItem.id : '') + '">' +
+      '<input type="hidden" id="mediaIconType" value="' + currentIconType + '">' +
+      '<div class="form-group"><label>🏷️ 标签类型</label><div class="icon-type-selector" id="iconTypeSelector">' +
+      this.iconTypes.map(function(t) {
+        var sel = t.id === currentIconType ? 'style="border:3px solid #FFD700;transform:scale(1.15);"' : 'style="border:2px solid rgba(255,255,255,0.2);"';
+        return '<button class="icon-type-btn" data-type="' + t.id + '" ' + sel + ' title="' + t.label + '" onclick="MediaMarker._selectIconType(this,\'' + t.id + '\')"><span style="font-size:22px;">' + t.icon + '</span><span style="font-size:9px;display:block;margin-top:1px;">' + t.label + '</span></button>';
+      }).join("") + '</div></div>' +
       '<div class="form-group"><label>📍 坐标</label><input value="' + lng.toFixed(4) + ', ' + lat.toFixed(4) + '" disabled></div>' +
       '<div class="form-group"><label>📝 标题</label><input type="text" id="mediaTitle" value="' + (isEdit ? editItem.title : '') + '" placeholder="景点名称"></div>' +
       '<div class="form-group"><label>📄 描述</label><textarea id="mediaDesc" rows="2" placeholder="简单介绍...">' + (isEdit && editItem.desc ? editItem.desc : '') + '</textarea></div>' +
@@ -108,6 +125,17 @@ var MediaMarker = {
       '<div id="vidPre" style="display:' + (isEdit && editItem.vidData ? 'block' : 'none') + ';text-align:center;margin:6px 0;"><video id="vidPreEl" src="' + (isEdit && editItem.vidData ? editItem.vidData : '') + '" controls style="max-width:100%;max-height:120px;border-radius:8px;"></video></div>' +
       '<button class="btn btn-primary btn-block" onclick="MediaMarker._saveFromDialog()" style="margin-top:8px;">' + (isEdit ? '💾 更新' : '✅ 保存') + '（自动持久化）</button></div></div>';
     document.body.appendChild(d);
+  },
+
+  _selectIconType: function(btn, iconType) {
+    document.getElementById("mediaIconType").value = iconType;
+    var buttons = document.querySelectorAll("#iconTypeSelector .icon-type-btn");
+    buttons.forEach(function(b) {
+      b.style.border = "2px solid rgba(255,255,255,0.2)";
+      b.style.transform = "scale(1)";
+    });
+    btn.style.border = "3px solid #FFD700";
+    btn.style.transform = "scale(1.15)";
   },
 
   _preview: function(input, type) {
@@ -122,6 +150,7 @@ var MediaMarker = {
 
   _saveFromDialog: function() {
     var editId = parseInt(document.getElementById("mediaEditId").value || "0");
+    var iconTypeEl = document.getElementById("mediaIconType"); var iconType = iconTypeEl ? iconTypeEl.value : "camera";
     var titleEl = document.getElementById("mediaTitle"); var title = titleEl ? titleEl.value.trim() : "未命名标注";
     var descEl = document.getElementById("mediaDesc"); var desc = descEl ? descEl.value.trim() : "";
     var imgFile = document.getElementById("mediaImage").files[0];
@@ -145,7 +174,7 @@ var MediaMarker = {
         var idx = self.mediaItems.findIndex(function(i) { return i.id === editId; });
         if (idx >= 0) {
           var item = self.mediaItems[idx];
-          item.title = title; item.desc = desc;
+          item.title = title; item.desc = desc; item.iconType = iconType;
           if (imgData !== undefined) item.imgData = imgData;
           if (vidData !== undefined) item.vidData = vidData;
           if (self.mediaMarkers[idx]) self.mediaMarkers[idx].remove();
@@ -153,7 +182,7 @@ var MediaMarker = {
           MediaDB.put(item);
         }
       } else {
-        var item = { id: Date.now(), lng: lng, lat: lat, title: title, desc: desc, imgData: imgData || null, vidData: vidData || null };
+        var item = { id: Date.now(), lng: lng, lat: lat, title: title, desc: desc, iconType: iconType, imgData: imgData || null, vidData: vidData || null };
         self.mediaItems.push(item);
         self._createMarker(item);
         MediaDB.put(item);
@@ -179,22 +208,26 @@ var MediaMarker = {
 
   _createMarker: function(item, replaceIdx) {
     var el = document.createElement("div");
-    el.style.cssText = "width:34px;height:34px;background:linear-gradient(135deg,#FF69B4,#FF1493);border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;box-shadow:0 2px 14px rgba(255,105,180,0.55);transition:all 0.25s;";
-    el.innerHTML = item.imgData ? "🖼️" : (item.vidData ? "🎬" : "📷");
-    el.title = item.title;
+    var cfg = this._getIconConfig(item.iconType || "camera");
+    var el = document.createElement("div");
+    el.style.cssText = "width:34px;height:34px;background:" + cfg.bg + ";border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;box-shadow:0 2px 14px " + cfg.shadow + ";transition:all 0.25s;";
+    el.innerHTML = item.imgData ? "🖼️" : (item.vidData ? "🎬" : cfg.icon);
+    el.title = item.title + " [" + cfg.label + "]";
+    el.dataset.iconType = item.iconType || "camera";
 
+    var sColor = cfg.shadow;
     el.addEventListener("mouseenter", function() {
       el.style.width = "42px";
       el.style.height = "42px";
       el.style.fontSize = "20px";
-      el.style.boxShadow = "0 0 22px rgba(255,105,180,0.9),0 4px 18px rgba(255,105,180,0.6)";
+      el.style.boxShadow = "0 0 22px " + sColor.replace("0.55", "0.9") + ",0 4px 18px " + sColor;
       el.style.zIndex = "100";
     });
     el.addEventListener("mouseleave", function() {
       el.style.width = "34px";
       el.style.height = "34px";
       el.style.fontSize = "15px";
-      el.style.boxShadow = "0 2px 14px rgba(255,105,180,0.55)";
+      el.style.boxShadow = "0 2px 14px " + sColor;
       el.style.zIndex = "";
     });
 
@@ -214,7 +247,7 @@ var MediaMarker = {
   _popupHTML: function(item) {
     var h = '<div style="min-width:260px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
-      '<div style="font-size:15px;font-weight:bold;color:#FFD700;">📍 ' + item.title + '</div>' +
+      '<div style="font-size:15px;font-weight:bold;color:#FFD700;">' + MediaMarker._getIconConfig(item.iconType||"camera").icon + ' ' + item.title + ' <span style="font-size:10px;color:#889;background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">' + MediaMarker._getIconConfig(item.iconType||"camera").label + '</span></div>' +
       '<div style="display:flex;gap:5px;">' +
       '<button onclick="MediaMarker.editItem(' + item.id + ')" style="background:rgba(0,212,255,0.15);border:1px solid #0DF;color:#0DF;padding:4px 10px;border-radius:8px;font-size:10px;cursor:pointer;">✏️ 编辑</button>' +
       '<button onclick="MediaMarker._del(' + item.id + ')" style="background:rgba(255,68,68,0.15);border:1px solid #F44;color:#F44;padding:4px 10px;border-radius:8px;font-size:10px;cursor:pointer;">🗑️</button>' +
