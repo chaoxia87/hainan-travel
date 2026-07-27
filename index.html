@@ -74,16 +74,24 @@
     var warnActive=false, drawActive=false, mediaActive=false;
 
     async function initApp() {
-      console.log("🚀 V1.0 启动...");
+      console.log("🚀 V2.6 启动...");
       try {
         var map = HainanMap.init("cesiumContainer");
-        map.on("load", async function() {
+        var mapLoaded = false;
+        var onMapReady = async function() {
+          if (mapLoaded) return; mapLoaded = true;
+          console.log("✅ 地图就绪，初始化景区...");
           HainanMap.loadAttractions();
           HainanMap.addAttractionMarkers();
           HainanMap.addCityLabels();
           console.log("✅ "+HainanMap.attractions.length+" 景点");
           if (MediaMarker.mediaItems.length>0) { document.getElementById("btnMediaDelAll").style.display="inline-flex"; document.getElementById("btnMediaList").style.display="inline-flex"; }
-        });
+        };
+        map.on("load", onMapReady);
+        // 10秒超时回退：即使瓦片加载失败也初始化景区
+        setTimeout(function() { if (!mapLoaded) { console.warn("⚠️ 瓦片加载超时，强制初始化"); onMapReady(); } }, 10000);
+        // 3秒后如果还没load，尝试手动触发
+        setTimeout(function() { if (!mapLoaded && map.loaded()) { console.warn("⚠️ map已loaded但事件未触发"); onMapReady(); } }, 3000);
         CameraController.init(map); RouteAnimation.init(map); MediaMarker.init(map);
         AIChat.init(); RoutePlanner.init(); KnowledgeBase.init();
 
