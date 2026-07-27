@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "hainan-travel-live",
   "version": "2.5.0",
   "description": "大哥弟旅游规划 - 海南3D旅游AI直播助手",
@@ -10,5 +10,8 @@
     "express": "^4.21.0",
     "multer": "^1.4.5-lts.1",
     "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

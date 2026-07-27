@@ -1,3 +1,4 @@
+// api.js V2.6 - 2026-07-27 deploy
 // api.js - API适配器 (自动识别本地/云端，故障回退)
 var API = {
   _serverChecked: false,
