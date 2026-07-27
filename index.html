@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>海南3D旅游AI直播助手 V1.0</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.5.0/dist/maplibre-gl.css">
+  <script src="https://unpkg.com/maplibre-gl@4.5.0/dist/maplibre-gl.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <div id="cesiumContainer"></div>
+    <div id="titleOverlay"><h1><img src="assets/images/touxiang1.png" style="width:36px;height:36px;border-radius:50%;vertical-align:middle;margin-right:8px;object-fit:cover;">大哥弟旅游规划</h1></div>
+
+    <div id="topBar">
+      <button class="quick-btn" onclick="CameraController.playOpeningAnimation()">🚀 开场</button>
+      <button class="quick-btn" onclick="CameraController.flyToHainanOverview()">🌏 全景</button>
+      <button class="quick-btn" onclick="HainanMap.flyToCity('三亚')">🏖️ 三亚</button>
+      <button class="quick-btn" onclick="HainanMap.flyToCity('万宁')">🏄 万宁</button>
+      <button class="quick-btn" onclick="HainanMap.flyToCity('海口')">🏛️ 海口</button>
+      <button class="quick-btn warning" id="btnWarn" onclick="toggleWarn()">⚠️ 避坑</button>
+      <button class="quick-btn" id="btnDraw" onclick="toggleDrawing()">✏️ 圈画</button>
+      <button class="quick-btn danger" id="btnErase" style="display:none" onclick="HainanMap.toggleEraseMode()">🗑️ 消除</button>
+      <button class="quick-btn danger" id="btnEraseAll" style="display:none" onclick="HainanMap.clearAllDrawing()">🗑️ 全清</button>
+      <button class="quick-btn" id="btnPen" onclick="togglePen()">🖌️ 画笔</button>
+      <button class="quick-btn" id="btnMedia" onclick="toggleMedia()">📷 标注</button>
+      <button class="quick-btn danger" id="btnMediaDelAll" style="display:none" onclick="MediaMarker.deleteAll()">🗑️ 删标注</button>
+      <button class="quick-btn" id="btnMediaList" style="display:none" onclick="MediaMarker.showListPanel()">📋 标注列表</button>
+      <button class="quick-btn primary" onclick="RoutePlanner.showPlanner()">🧭 AI规划</button>
+      <button class="quick-btn" onclick="KnowledgeBase.showPanel()">📚 知识库</button>
+    </div>
+
+    <div id="aiPanel">
+      <div class="ai-panel-header"><h3>🤖 AI助手(DeepSeek)</h3><button class="btn-icon" onclick="document.getElementById('aiPanel').classList.toggle('collapsed')">◀</button></div>
+      <div id="aiMessages"><div class="ai-message ai-response"><div class="ai-avatar">🤖</div><div class="ai-bubble">你好！🌴 63景点18城市<br>🧭 DeepSeek实时规划 | 📷 标注持久化</div></div></div>
+      <div class="ai-input-area">
+        <input type="text" id="aiInput" placeholder="问：一家三口5天怎么玩？" onkeydown="if(event.key==='Enter')sendAIQuestion()">
+        <button onclick="sendAIQuestion()">➤</button>
+      </div>
+    </div>
+
+    <div id="attractionCard"></div>
+    <div id="plannerPanel"></div>
+    <div id="knowledgePanel"></div>
+    <div id="mapStatus"></div>
+  </div>
+
+  <div id="penToolbar" style="display:none;">
+    <span style="color:#aab8d8;font-size:12px;margin-right:6px;">画笔颜色:</span>
+    <button class="pen-color-btn" style="background:#FF3333;" onclick="HainanMap.setPenColor(&quot;#FF3333&quot;)"></button>
+    <button class="pen-color-btn" style="background:#FFD700;" onclick="HainanMap.setPenColor(&quot;#FFD700&quot;)"></button>
+    <button class="pen-color-btn" style="background:#00D4FF;" onclick="HainanMap.setPenColor(&quot;#00D4FF&quot;)"></button>
+    <button class="pen-color-btn" style="background:#66DD88;" onclick="HainanMap.setPenColor(&quot;#66DD88&quot;)"></button>
+    <button class="pen-color-btn" style="background:#FF99BB;" onclick="HainanMap.setPenColor(&quot;#FF99BB&quot;)"></button>
+    <button class="pen-color-btn" style="background:#FFFFFF;" onclick="HainanMap.setPenColor(&quot;#FFFFFF&quot;)"></button>
+    <span style="color:#aab8d8;margin:0 8px;">|</span>
+    <button class="quick-btn danger" onclick="HainanMap.undoPenStroke()" style="padding:5px 12px;font-size:12px;">↩ 撤销</button>
+    <button class="quick-btn danger" onclick="HainanMap.clearAllPen()" style="padding:5px 12px;font-size:12px;">🗑️ 清空</button>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/content.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/planner.js"></script>
+  <script src="js/routeAnimation.js"></script>
+  <script src="js/knowledge.js"></script>
+  <script src="js/media.js"></script>
+
+  <script>
+    var warnActive=false, drawActive=false, mediaActive=false;
+
+    async function initApp() {
+      console.log("🚀 V1.0 启动...");
+      try {
+        var map = HainanMap.init("cesiumContainer");
+        map.on("load", async function() {
+          HainanMap.loadAttractions();
+          HainanMap.addAttractionMarkers();
+          HainanMap.addCityLabels();
+          console.log("✅ "+HainanMap.attractions.length+" 景点");
+          if (MediaMarker.mediaItems.length>0) { document.getElementById("btnMediaDelAll").style.display="inline-flex"; document.getElementById("btnMediaList").style.display="inline-flex"; }
+        });
+        CameraController.init(map); RouteAnimation.init(map); MediaMarker.init(map);
+        AIChat.init(); RoutePlanner.init(); KnowledgeBase.init();
+
+        map.on("mousedown", function(e){ if(HainanMap.pen.active) HainanMap._onPenDown(e); });
+        map.on("mousemove", function(e){ if(HainanMap.pen.active) HainanMap._onPenMove(e); });
+        map.on("mouseup", function(e){ if(HainanMap.pen.active) HainanMap._onPenUp(e); });
+        map.on("click", function(e) {
+          if (drawActive && !HainanMap.eraseMode) HainanMap.addDrawPoint(e.lngLat.lng, e.lngLat.lat);
+          else if (mediaActive) { MediaMarker.addAtPosition(e.lngLat.lng, e.lngLat.lat); toggleMedia(); }
+        });
+        map.on("contextmenu", function(e) { if (drawActive) { e.originalEvent.preventDefault(); HainanMap.finishDrawing(); toggleDrawing(); } });
+
+        setTimeout(function() { CameraController.playOpeningAnimation(); }, 800);
+        console.log("🎉 OK");
+      } catch (e) { console.error(e); }
+    }
+
+    async function sendAIQuestion() {
+      var inp=document.getElementById("aiInput"),q=inp.value.trim();if(!q)return;inp.value="";
+      ContentDisplay.showUserMessage(q);ContentDisplay.showTyping();
+      try{var a=await AIChat.ask(q);ContentDisplay.removeTyping();ContentDisplay.showAIResponse(a);}
+      catch(e){ContentDisplay.removeTyping();ContentDisplay.showAIResponse("出错："+e.message);}
+    }
+
+    function toggleWarn(){warnActive=!warnActive;var b=document.getElementById("btnWarn");
+      if(warnActive){HainanMap.enableWarnMode();b.classList.add("active")}else{HainanMap.disableWarnMode();b.classList.remove("active")}}
+
+    function toggleDrawing(){
+      drawActive=!drawActive;var bd=document.getElementById("btnDraw");
+      if(drawActive){HainanMap.startDrawing();bd.classList.add("active");bd.textContent="✅ 完成"}
+      else{HainanMap.finishDrawing();bd.classList.remove("active");bd.textContent="✏️ 圈画"}
+    }
+
+    function togglePen(){
+  if(HainanMap.pen.active){HainanMap.finishPen();var b=document.getElementById('btnPen');b.classList.remove('active');b.textContent='🖌️ 画笔';}
+  else{if(drawActive)toggleDrawing();if(mediaActive)toggleMedia();HainanMap.startPen();var b=document.getElementById('btnPen');b.classList.add('active');b.textContent='🖌️ 绘制中...';}
+}
+function toggleMedia(){
+      mediaActive=!mediaActive;var b=document.getElementById("btnMedia");
+      if(mediaActive){if(drawActive)toggleDrawing();MediaMarker.startAddMode();b.classList.add("active");b.textContent="📷 点击...";}
+      else{MediaMarker.cancelAddMode();b.classList.remove("active");b.textContent="📷 标注";}
+      if(MediaMarker.mediaItems.length>0) { document.getElementById("btnMediaDelAll").style.display="inline-flex"; document.getElementById("btnMediaList").style.display="inline-flex"; }
+    }
+
+    document.addEventListener("keydown",function(e){
+      if(e.ctrlKey&&e.key==="Enter"){e.preventDefault();RoutePlanner.showPlanner();}
+      if(e.ctrlKey&&e.key==="z"){e.preventDefault();if(HainanMap.pen.active)HainanMap.undoPenStroke();}
+      if(e.key==="Escape"){document.getElementById("plannerPanel").classList.remove("active");document.getElementById("knowledgePanel").classList.remove("active");ContentDisplay.closeCard();if(HainanMap.eraseMode)HainanMap.toggleEraseMode();if(HainanMap.pen.active)togglePen();}
+    });
+
+    window.addEventListener("DOMContentLoaded",initApp);
+  </script>
+</body>
+</html>
