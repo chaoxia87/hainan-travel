@@ -6,6 +6,7 @@ const AIChat = {
     model: "deepseek-chat",
     enabled: true
   },
+  useProxy: function() { return API && API.isServer && API.isServer(); },
   knowledge: null,
   attractions: null,
   conversationHistory: [],
@@ -88,4 +89,7 @@ const AIChat = {
     }catch(e){}
   }
 };
+AIChat.knowledge = null;
+AIChat.attractions = null;
+AIChat.conversationHistory = [];
 window.AIChat = AIChat;

@@ -1,5 +1,4 @@
-﻿// server.js - 大哥弟旅游规划 后端服务器
-const express = require("express");
+// server.js - 澶у摜寮熸梾娓歌鍒?鍚庣鏈嶅姟鍣?const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
 const path = require("path");
@@ -10,17 +9,17 @@ const PORT = process.env.PORT || 3000;
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "sk-61f271bb50984baca6dfc0a101bf730e";
 const DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions";
 
-// 数据存储目录
+// 鏁版嵁瀛樺偍鐩綍
 const DATA_DIR = path.join(__dirname, "server_data");
 const UPLOADS_DIR = path.join(DATA_DIR, "uploads");
 [ DATA_DIR, UPLOADS_DIR ].forEach(function(d) { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); });
 
-// 数据文件路径
+// 鏁版嵁鏂囦欢璺緞
 const MEDIA_FILE = path.join(DATA_DIR, "media.json");
 const KNOWLEDGE_FILE = path.join(DATA_DIR, "knowledge.json");
 const ROUTES_FILE = path.join(DATA_DIR, "routes.json");
 
-// 读取/写入JSON
+// 璇诲彇/鍐欏叆JSON
 function readJSON(filepath) {
   try { return JSON.parse(fs.readFileSync(filepath, "utf-8")); } catch(e) { return null; }
 }
@@ -28,17 +27,15 @@ function writeJSON(filepath, data) {
   fs.writeFileSync(filepath, JSON.stringify(data, null, 2), "utf-8");
 }
 
-// 初始化数据文件
-if (!readJSON(MEDIA_FILE)) writeJSON(MEDIA_FILE, []);
+// 鍒濆鍖栨暟鎹枃浠?if (!readJSON(MEDIA_FILE)) writeJSON(MEDIA_FILE, []);
 if (!readJSON(KNOWLEDGE_FILE)) writeJSON(KNOWLEDGE_FILE, []);
 if (!readJSON(ROUTES_FILE)) writeJSON(ROUTES_FILE, []);
 
-// 中间件
-app.use(cors());
+// 涓棿浠?app.use(cors());
 app.use(express.json({ limit: "100mb" }));
 app.use(express.static(__dirname));
 
-// 文件上传配置
+// 鏂囦欢涓婁紶閰嶇疆
 const storage = multer.diskStorage({
   destination: UPLOADS_DIR,
   filename: function(req, file, cb) {
@@ -47,9 +44,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage, limits: { fileSize: 200 * 1024 * 1024 } });
 
-// ============ API 路由 ============
+// ============ API 璺敱 ============
 
-// 媒体标注 API
+// 濯掍綋鏍囨敞 API
 app.get("/api/media", function(req, res) {
   res.json(readJSON(MEDIA_FILE) || []);
 });
@@ -58,7 +55,7 @@ app.post("/api/media", function(req, res) {
   res.json({ success: true });
 });
 
-// 知识点 API
+// 鐭ヨ瘑鐐?API
 app.get("/api/knowledge", function(req, res) {
   res.json(readJSON(KNOWLEDGE_FILE) || []);
 });
@@ -67,7 +64,7 @@ app.post("/api/knowledge", function(req, res) {
   res.json({ success: true });
 });
 
-// 路线历史 API
+// 璺嚎鍘嗗彶 API
 app.get("/api/routes", function(req, res) {
   res.json(readJSON(ROUTES_FILE) || []);
 });
@@ -76,34 +73,16 @@ app.post("/api/routes", function(req, res) {
   res.json({ success: true });
 });
 
-// 文件上传
+// 鏂囦欢涓婁紶
 app.post("/api/upload", upload.single("file"), function(req, res) {
-  if (!req.file) return res.status(400).json({ error: "没有文件" });
+  if (!req.file) return res.status(400).json({ error: "娌℃湁鏂囦欢" });
   res.json({ url: "/server_data/uploads/" + req.file.filename, filename: req.file.originalname });
 });
 
-// 提供上传文件访问
+// 鎻愪緵涓婁紶鏂囦欢璁块棶
 app.use("/server_data", express.static(DATA_DIR));
 
-// ============ DeepSeek AI 代理 ============
-app.post("/api/deepseek", async function(req, res) {
-  try {
-    var resp = await fetch(DEEPSEEK_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + DEEPSEEK_API_KEY },
-      body: JSON.stringify(req.body)
-    });
-    if (!resp.ok) { var errText = await resp.text(); return res.status(resp.status).json({ error: errText }); }
-    var data = await resp.json();
-    res.json(data);
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
-
-// 健康检查
-app.get("/api/health", function(req, res) {
-  res.json({ status: "ok", time: new Date().toISOString(), hasApiKey: !!DEEPSEEK_API_KEY });
-});
-// 启动
+// 鍚姩
 app.listen(PORT, function() {
-  console.log("大哥弟旅游规划服务器启动: http://localhost:" + PORT);
+  console.log("澶у摜寮熸梾娓歌鍒掓湇鍔″櫒鍚姩: http://localhost:" + PORT);
 });
