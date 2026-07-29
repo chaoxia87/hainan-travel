@@ -159,6 +159,7 @@ function toggleMedia(){
     // 密码验证
     var AI_PWD_VERIFIED = false;
     function needPassword() {
+      if (window.location.protocol === "file:") { document.getElementById("pwdError") && (document.getElementById("pwdError").textContent = "请通过 http://localhost:3000 访问"); return true; }
       var pwd = sessionStorage.getItem("ai_access_pwd");
       if (pwd) { AI_PWD_VERIFIED = true; return false; }
       if (AI_PWD_VERIFIED) return false;
@@ -187,7 +188,7 @@ function toggleMedia(){
           document.getElementById("pwdError").style.display = "block";
         }
       } catch(e) {
-        document.getElementById("pwdError").textContent = "网络错误，请重试";
+        document.getElementById("pwdError").textContent = "网络错误：" + (e.message || "未知") + " 请用 http://localhost:3000 访问";
         document.getElementById("pwdError").style.display = "block";
       }
     }

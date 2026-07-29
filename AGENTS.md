@@ -64,6 +64,12 @@ D:\codex\lvyouxiangmu\
 ## Git配置
 - 远程：https://chaoxia87:（已配置在本地Git凭证中）@github.com/chaoxia87/hainan-travel.git
 
+## 安全配置
+- DeepSeek API密钥：仅在server.js服务器端，前端不可见
+- 访问密码：zy666888（输入一次，sessionStorage保存）
+- /api/deepseek 需密码验证，无密码返回401
+- 密码验证端点：/api/verify-password
+
 ## 核心功能
 1. 高德3D卫星地图 + 63个海南景点标记
 2. AI问答（DeepSeek，支持住宿/美食/交通/天气/亲子等）
@@ -71,7 +77,8 @@ D:\codex\lvyouxiangmu\
 4. 路线动画演示（卡通敞篷车沿路线移动+镜头跟随）
 5. 圈画功能（多点标注+逐点消除+颜色选择）
 6. 画笔功能（自由绘制+撤销+清空+颜色选择）
-7. 媒体标注（图片/视频上传+4种图标标签📷景点/🍜餐饮/🏨住宿/🏊游玩+编辑切换+导出/导入含标签属性）
+7. AI访问密码保护（隐藏输入+会话记忆）
+8. 媒体标注（图片/视频上传+4种图标标签📷景点/🍜餐饮/🏨住宿/🏊游玩+编辑切换+导出/导入含标签属性）
 8. 知识库（问答记录+路线历史+全部记录查看）
 9. 城市快捷导航（三亚/万宁/海口/全景等）
 10. 避坑模式（景点避坑提示）
@@ -82,7 +89,7 @@ D:\codex\lvyouxiangmu\
 - D:\codex\lvyouxiangmu_backup_V2.0 （早期稳定版）
 - D:\codex\lvyouxiangmu_backup_V2.2 （中期版本）
 - D:\codex\lvyouxiangmu_backup_V2.5 （云端部署版）
-- D:\codex\lvyouxiangmu_backup_V2.7 （多图标标签版 ★当前）
+- D:\codex\lvyouxiangmu_backup_V2.8 （多图标标签版 ★当前）
 
 ## 注意事项
 - 批量编辑js文件使用Node.js脚本（PowerShell中文路径转义问题）
