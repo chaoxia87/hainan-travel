@@ -7,8 +7,9 @@ const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "sk-61f271bb50984baca6dfc0a101bf730e";
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "sk-a1ceb08685094647a37eb0f1d0e05382";
 const DEEPSEEK_ENDPOINT = "https://api.deepseek.com/v1/chat/completions";
+const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD || "zy666888";
 
 // 数据存储目录
 const DATA_DIR = path.join(__dirname, "server_data");
@@ -86,7 +87,20 @@ app.post("/api/upload", upload.single("file"), function(req, res) {
 app.use("/server_data", express.static(DATA_DIR));
 
 // ============ DeepSeek AI 代理 ============
+// 访问密码验证
+app.post("/api/verify-password", function(req, res) {
+  if (req.body.password === ACCESS_PASSWORD) {
+    res.json({ success: true, token: ACCESS_PASSWORD });
+  } else {
+    res.status(401).json({ error: "密码错误" });
+  }
+});
+
 app.post("/api/deepseek", async function(req, res) {
+  var pwd = req.body._password || req.headers["x-access-password"] || "";
+  if (pwd !== ACCESS_PASSWORD) {
+    return res.status(401).json({ error: "需要访问密码" });
+  }
   try {
     var resp = await fetch(DEEPSEEK_ENDPOINT, {
       method: "POST",

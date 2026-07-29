@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>大哥弟旅游规划 V2.7</title>
+  <title>大哥弟旅游规划 V2.8</title>
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.5.0/dist/maplibre-gl.css">
   <script src="https://unpkg.com/maplibre-gl@4.5.0/dist/maplibre-gl.js"></script>
   <link rel="stylesheet" href="css/style.css">
@@ -43,6 +43,19 @@
     <div id="attractionCard"></div>
     <div id="plannerPanel"></div>
     <div id="knowledgePanel"></div>
+    <div id="passwordGate" style="display:none;">
+      <div class="password-overlay" onclick="closePasswordGate()"></div>
+      <div class="password-dialog">
+        <h4>🔐 访问验证</h4>
+        <p style="font-size:12px;color:#889;margin:4px 0 16px;">AI功能需要输入访问密码（一次输入，刷新无需重输）</p>
+        <input type="password" id="pwdInput" placeholder="请输入访问密码" onkeydown="if(event.key==='Enter')verifyPassword()">
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn btn-primary btn-block" onclick="verifyPassword()">✅ 验证</button>
+          <button class="btn btn-secondary" onclick="closePasswordGate()">取消</button>
+        </div>
+        <div id="pwdError" style="color:#F44;font-size:11px;margin-top:8px;display:none;"></div>
+      </div>
+    </div>
     <div id="mapStatus"></div>
   </div>
 
@@ -74,7 +87,7 @@
     var warnActive=false, drawActive=false, mediaActive=false;
 
     async function initApp() {
-      console.log("🚀 V2.7 启动...");
+      console.log("🚀 V2.8 启动...");
       try {
         var map = HainanMap.init("cesiumContainer");
         var mapLoaded = false;
@@ -142,7 +155,63 @@ function toggleMedia(){
       if(e.key==="Escape"){document.getElementById("plannerPanel").classList.remove("active");document.getElementById("knowledgePanel").classList.remove("active");ContentDisplay.closeCard();if(HainanMap.eraseMode)HainanMap.toggleEraseMode();if(HainanMap.pen.active)togglePen();}
     });
 
-    window.addEventListener("DOMContentLoaded",initApp);
+    
+    // 密码验证
+    var AI_PWD_VERIFIED = false;
+    function needPassword() {
+      var pwd = sessionStorage.getItem("ai_access_pwd");
+      if (pwd) { AI_PWD_VERIFIED = true; return false; }
+      if (AI_PWD_VERIFIED) return false;
+      return true;
+    }
+    function showPasswordGate() {
+      document.getElementById("passwordGate").style.display = "block";
+      document.getElementById("pwdInput").focus();
+      document.getElementById("pwdError").style.display = "none";
+    }
+    function closePasswordGate() {
+      document.getElementById("passwordGate").style.display = "none";
+    }
+    async function verifyPassword() {
+      var pwd = document.getElementById("pwdInput").value.trim();
+      if (!pwd) return;
+      try {
+        var resp = await fetch("/api/verify-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pwd }) });
+        if (resp.ok) {
+          sessionStorage.setItem("ai_access_pwd", pwd);
+          AI_PWD_VERIFIED = true;
+          closePasswordGate();
+          document.getElementById("pwdError").style.display = "none";
+        } else {
+          document.getElementById("pwdError").textContent = "密码错误，请重试";
+          document.getElementById("pwdError").style.display = "block";
+        }
+      } catch(e) {
+        document.getElementById("pwdError").textContent = "网络错误，请重试";
+        document.getElementById("pwdError").style.display = "block";
+      }
+    }
+    // 包装AI提问和规划，自动弹出密码框
+    var _origSendAIQuestion = sendAIQuestion;
+    sendAIQuestion = function() {
+      if (needPassword()) { showPasswordGate(); return; }
+      _origSendAIQuestion();
+    };
+    var _origShowPlanner = RoutePlanner.showPlanner;
+    RoutePlanner.showPlanner = function() {
+      if (needPassword()) { showPasswordGate(); return; }
+      _origShowPlanner.apply(this, arguments);
+    };
+
+window.addEventListener("DOMContentLoaded",initApp);
   </script>
+
+<style>
+.password-overlay { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000; }
+.password-dialog { position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(15,20,35,0.98);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:28px;z-index:10001;min-width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+.password-dialog h4 { font-size:17px;color:#FFD700;margin:0 0 4px; }
+.password-dialog input { width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.06);color:#fff;font-size:14px;outline:none;box-sizing:border-box; }
+.password-dialog input:focus { border-color:#0DF;box-shadow:0 0 10px rgba(0,212,255,0.2); }
+</style>
 </body>
 </html>

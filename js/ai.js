@@ -2,11 +2,11 @@
 const AIChat = {
   apiConfig: {
     endpoint: "https://api.deepseek.com/v1/chat/completions",
-    apiKey: "sk-61f271bb50984baca6dfc0a101bf730e",
+    apiKey: null, // 密钥已移至服务器端
     model: "deepseek-chat",
     enabled: true
   },
-  useProxy: function() { return API && API.isServer && API.isServer(); },
+  useProxy: function() { return true; }, // 强制走服务器代理（密钥安全）
   knowledge: null,
   attractions: null,
   conversationHistory: [],
@@ -43,6 +43,10 @@ const AIChat = {
     if(!resp.ok){var t=await resp.text();throw new Error("API "+resp.status+": "+t);}
     var data=await resp.json();
     return data.choices[0].message.content;
+  },
+
+  _getPassword: function() {
+    try { return sessionStorage.getItem("ai_access_pwd") || ""; } catch(e) { return ""; }
   },
 
   _localAnswer(question) {

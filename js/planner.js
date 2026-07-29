@@ -54,12 +54,12 @@ const RoutePlanner = {
 
   async _callDeepSeek(userInput) {
     var cfg = AIChat.apiConfig;
-    if(!cfg.apiKey)throw new Error("API未配置");
+    if(!AIChat._getPassword())throw new Error("请先输入访问密码");
     var cities = Object.keys(HainanMap.cities).join("、");
     var sys = '你是海南旅游路线规划专家。严格返回JSON。格式：{"name":"路线名","type":"亲子/情侣/老人/年轻人/经典","days":[{"day":1,"from":"城市","to":"城市","places":["景点"],"stay":"城市"}],"tips":"建议","budget":{"accommodation":0,"food":0,"transport":0,"tickets":0,"total":0}}。城市：'+cities+'。景点：'+this.attrList.join("、")+'。规则：from/to/stay来自城市列表；places来自景点列表；路线连续；最后stay="返程"。';
-    var resp = await fetch(cfg.endpoint,{
-      method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+cfg.apiKey},
-      body:JSON.stringify({model:cfg.model,messages:[{role:"system",content:sys},{role:"user",content:"规划海南旅游："+userInput}],temperature:0.7,max_tokens:2000})
+    var resp = await fetch("/api/deepseek",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:cfg.model,messages:[{role:"system",content:sys},{role:"user",content:"规划海南旅游："+userInput}],temperature:0.7,max_tokens:2000,_password: AIChat._getPassword()})
     });
     if(!resp.ok)throw new Error("API "+resp.status);
     var text = (await resp.json()).choices[0].message.content;
